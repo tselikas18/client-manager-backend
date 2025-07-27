@@ -5,8 +5,11 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import cors from 'cors'
 import mongoose from "mongoose";
+import { config } from "../config"
+
 
 const app = express();
+const databaseURL = config.MONGODB_URL;
 
 app.use(cors({
   credentials: true,
@@ -18,10 +21,9 @@ app.use(bodyParser.json());
 
 const server = http.createServer(app)
 
-server.listen(3000, () => { console.log('Server is running on port http://localhost:3000/'); });
-
-const MONGO_URL = "mongodb+srv://admin:admin@cluster0.gfln2u6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+server.listen(8000, () => { console.log('Server is running on port http://localhost:8000/'); });
+console.log(`db is  ${databaseURL}`);
 
 mongoose.Promise = Promise;
-mongoose.connect(MONGO_URL);
+mongoose.connect(databaseURL);
 mongoose.connection.on('error', (error: Error) => console.log(error));
