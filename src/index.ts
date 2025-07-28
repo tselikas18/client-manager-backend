@@ -6,6 +6,7 @@ import compression from 'compression';
 import cors from 'cors'
 import mongoose from "mongoose";
 import { config } from "../config"
+import router from './router/indexRouter'
 
 
 const app = express();
@@ -22,8 +23,10 @@ app.use(bodyParser.json());
 const server = http.createServer(app)
 
 server.listen(8000, () => { console.log('Server is running on port http://localhost:8000/'); });
-console.log(`db is  ${databaseURL}`);
+console.log(`db is running at ${databaseURL}`);
 
 mongoose.Promise = Promise;
 mongoose.connect(databaseURL);
 mongoose.connection.on('error', (error: Error) => console.log(error));
+
+app.use('/', router())
