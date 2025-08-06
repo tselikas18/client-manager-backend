@@ -42,6 +42,10 @@ export const updateUser = async (req: express.Request, res: express.Response) =>
     user.username = username;
     user.email = email;
 
+    if (!user.authentication) {
+      return res.status(400).json({ error: 'Authentication details are missing.' });
+    }
+
     await user.save();
     return res.status(200).json({ message: 'User updated successfully.' });
 
