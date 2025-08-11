@@ -1,7 +1,6 @@
-import express from "express";
 import {deleteUserById, getUserById, getUsers} from "../db/users";
 
-export const getAllUsers = async (req: express.Request, res: express.Response) => {
+export const getAllUsers = async (req, res) => {
   try {
     const users = await getUsers();
     return res.status(200).json(users);
@@ -11,7 +10,7 @@ export const getAllUsers = async (req: express.Request, res: express.Response) =
   }
 }
 
-export const deleteUser = async (req: express.Request, res: express.Response) => {
+export const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -24,7 +23,7 @@ export const deleteUser = async (req: express.Request, res: express.Response) =>
   }
 }
 
-export const updateUser = async (req: express.Request, res: express.Response) => {
+export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { username, email } = req.body;
@@ -47,10 +46,10 @@ export const updateUser = async (req: express.Request, res: express.Response) =>
     }
 
     await user.save();
-    return res.status(200).json({ message: 'User updated successfully.' });
+    return res.status(200).json({ message: 'User updated' });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: 'An error occurred while updating the user.' });
+    return res.status(500).json({ error: 'Error updating User' });
   }
 };

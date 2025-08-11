@@ -15,7 +15,7 @@ export const ClientModel = mongoose.model('Client', clientSchema);
 
 //controllers
 export const getClients = () => ClientModel.find();
-export const getClientsByName = (name: string) => ClientModel.find({name});
+export const getClientByName = (name: string) => ClientModel.find({name});
 export const getClientByEmail = (email: string) => ClientModel.findOne({ email });
 export const getClientByPhone = (phone: string) => ClientModel.findOne({ phone });
 export const createClient = (values: Record<string, any>) => new ClientModel(values)
