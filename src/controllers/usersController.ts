@@ -1,6 +1,7 @@
 import {deleteUserById, getUserById, getUsers} from "../db/users";
+import {Request, Response} from "express";
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await getUsers();
     return res.status(200).json(users);
@@ -10,7 +11,7 @@ export const getAllUsers = async (req, res) => {
   }
 }
 
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -23,7 +24,7 @@ export const deleteUser = async (req, res) => {
   }
 }
 
-export const updateUser = async (req, res) => {
+export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { username, email } = req.body;
