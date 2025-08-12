@@ -18,7 +18,7 @@ export const getClients = () => ClientModel.find();
 export const getClientByName = (name: string) => ClientModel.find({name});
 export const getClientByEmail = (email: string) => ClientModel.findOne({ email });
 export const getClientByPhone = (phone: string) => ClientModel.findOne({ phone });
-export const createClient = (values: Record<string, any>) => new ClientModel(values)
+export const dbCreateClient = (values: Record<string, any>) => new ClientModel(values)
     .save()
     .then((client) => client.toObject());
 export const deleteClientById = (id: string) => ClientModel.findOneAndDelete({ _id: id });
