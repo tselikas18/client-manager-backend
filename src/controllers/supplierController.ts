@@ -1,5 +1,14 @@
-import {deleteSupplierById, getSupplierByName, getSupplierByEmail, getSupplierByPhone, getSuppliers} from "../db/supplier";
+import {deleteSupplierById, getSupplierByName, getSupplierByEmail, getSupplierByPhone, getSuppliers, dbCreateSupplier} from "../db/supplier";
 import {Request, Response} from "express";
+import {z} from "zod";
+
+const createSupplierSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().trim().min(7),
+  email: z.string().email(),
+  amount_owed: z.number().positive().default(0.0).optional(),
+  notes: z.string().optional(),
+})
 
 export const getAllSuppliers = async (req: Request, res: Response) => {
   try {
@@ -20,7 +29,7 @@ export const deleteSupplier = async (req: Request, res: Response) => {
     return res.json(deleteSupplier);
   } catch (error) {
     console.log(error);
-    return res.status(400)
+    return res.status(400);
   }
 }
 
@@ -60,3 +69,25 @@ export const updateSupplier = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Error updating supplier" });
   }
 };
+
+export const createSupplier = async (req: Request, res: Response) => {
+  try {
+    const parsed = createSupplierSchema.parse(req.body);
+
+    const existingByEmail = await getSupplierByEmail(parsed.email);
+    if (existingByEmail) {
+      return res.status(400).json({error: "Email already exists"});
+    }
+    const existingByPhone = await getSupplierByPhone(parsed.phone);
+    if (existingByPhone) {
+      return res.status(400).json({error: "Phone already exists"});
+    }
+
+    const created = await dbCreateSupplier(parsed)
+
+    return res.status(200).json(created)
+  } catch (error){
+    console.error(error);
+    return res.status(400);
+  }
+}

@@ -1,5 +1,5 @@
 import {getClients, deleteClientById, getClientByPhone, getClientByEmail, getClientByName, dbCreateClient} from "../db/client";
-import {NextFunction, Request, Response} from "express";
+import { Request, Response} from "express";
 import {z} from "zod";
 
 const createClientSchema = z.object({
@@ -72,7 +72,7 @@ export const updateClient = async (req: Request, res: Response) => {
   }
 };
 
-export const createClient = async (req: Request, res: Response, next: NextFunction) => {
+export const createClient = async (req: Request, res: Response) => {
   try {
     const parsed = createClientSchema.parse(req.body);
 
@@ -90,6 +90,6 @@ export const createClient = async (req: Request, res: Response, next: NextFuncti
     return res.status(201).json(created);
   }catch (error) {
     console.error(error);
-    return next(error);
+    return res.status(400);
   }
 }
