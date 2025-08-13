@@ -1,26 +1,31 @@
+import { Request, Response, NextFunction, } from 'express';
 import express from "express";
 import { get, merge } from "lodash";
 import {getUserBySessionToken} from "../db/users";
+import { getClientById } from "../db/client";
 
-
-export const isOwner = async  (req: express.Request, res: express.Response, next: express.NextFunction) => {
+export const isOwner = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const currentUserId = get(req, 'identity._id') as string | undefined;
+    if (!currentUserId) return res.sendStatus(401);
+
     const { id } = req.params;
-    const currentUserId = get(req, 'identity._id') as unknown as string;
 
-    if (!currentUserId) {
-      return res.status(403);
+    if (!id || req.method === 'POST') return next();
+
+    const client = await getClientById(id);
+    if (!client) return res.status(404).json({ message: 'resource not found' });
+
+    if (client.user_id?.toString() !== currentUserId.toString()) {
+      return res.status(403).json({ message: 'forbidden action' });
     }
 
-    if (currentUserId.toString() !== id) {
-      return res.status(403).json({message: "forbidden action"});
-    }
-  next();
-  }catch (error) {
-    console.error(error);
+    return next();
+  } catch (err) {
+    console.error(err);
     return res.sendStatus(400);
   }
-}
+};
 
 export const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
