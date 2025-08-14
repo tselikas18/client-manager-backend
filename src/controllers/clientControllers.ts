@@ -1,14 +1,19 @@
 import {
   getClientsByUserId,
   deleteClientById,
-  getClientByPhone,
-  getClientByEmail,
-  getClientByName,
   dbCreateClient,
-  getClientById, updateClientById
+  getClientById,
+  updateClientById,
+  deleteClientByPhoneForUser,
+  deleteClientByEmailForUser,
+  deleteClientByNameForUser,
+  getClientByEmailForUser,
+  getClientByPhoneForUser,
+  getClientByNameForUser
 } from "../db/client";
 import { Request, Response} from "express";
 import {z} from "zod";
+
 
 const createClientSchema = z.object({
   name: z.string().min(1),
@@ -25,6 +30,9 @@ const updateClientSchema = z.object({
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
+
+const getCurrentUserId = (req: Request): string | null =>
+    (req as any).identity?._id ?? null;
 
 export const getAllClients = async (req: Request, res: Response) => {
   try {
@@ -84,19 +92,26 @@ export const updateClient = async (req: Request, res: Response) => {
 export const createClient = async (req: Request, res: Response) => {
   try {
     const parsed = createClientSchema.parse(req.body);
-
-    const currentUserId = (req as any).identity?._id as string | undefined;
+    const currentUserId = getCurrentUserId(req);
     if (!currentUserId) return res.sendStatus(401);
 
-    const existingByEmail = await getClientByEmail(parsed.email);
+    const existingByEmail = parsed.email
+        ? await getClientByEmailForUser(parsed.email, currentUserId)
+        : null;
     if (existingByEmail) return res.status(400).json({ error: "Email already exists" });
 
-    const existingByPhone = await getClientByPhone(parsed.phone);
+    const existingByPhone = parsed.phone
+        ? await getClientByPhoneForUser(parsed.phone, currentUserId)
+        : null;
     if (existingByPhone) return res.status(400).json({ error: "Phone already exists" });
+
+    const existingByName = parsed.name
+        ? await getClientByNameForUser(parsed.name, currentUserId)
+        : null;
+    if (existingByName) return res.status(400).json({ error: "Name already exists" });
 
     const payload = { ...parsed, user_id: currentUserId };
     const created = await dbCreateClient(payload);
-
     return res.status(201).json(created);
   } catch (error: any) {
     console.error(error);
@@ -107,8 +122,11 @@ export const createClient = async (req: Request, res: Response) => {
 export const getClientByPhoneController = async (req: Request, res: Response) => {
   try {
     const phone = String(req.params.phone || req.query.phone || req.body.phone);
-    const client = await getClientByPhone(phone);
-    if (!client) return res.status(404).json({ error: "Not found" });
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+
+    const client = await getClientByPhoneForUser(phone, userId);
+    if (!client) return res.status(404).json({ error: "Phone not found" });
     return res.status(200).json(client);
   } catch (err: any) {
     console.error(err);
@@ -119,8 +137,12 @@ export const getClientByPhoneController = async (req: Request, res: Response) =>
 export const getClientByNameController = async (req: Request, res: Response) => {
   try {
     const name = String(req.params.name || req.query.name || req.body.name);
-    const clients = await getClientByName(name);
-    return res.status(200).json(clients);
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+
+    const client = await getClientByNameForUser(name, userId);
+    if (!client) return res.status(404).json({ error: "Name not found" });
+    return res.status(200).json(client);
   } catch (err: any) {
     console.error(err);
     return res.status(500).json({ error: err.message });
@@ -130,9 +152,60 @@ export const getClientByNameController = async (req: Request, res: Response) => 
 export const getClientByEmailController = async (req: Request, res: Response) => {
   try {
     const email = String(req.params.email || req.query.email || req.body.email);
-    const client = await getClientByEmail(email);
-    if (!client) return res.status(404).json({ error: "Not found" });
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+
+    const client = await getClientByEmailForUser(email, userId);
+    if (!client) return res.status(404).json({ error: "Email not found" });
     return res.status(200).json(client);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteClientByPhoneController = async (req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+    const phone = String(req.params.phone || "");
+    if (!phone) return res.status(400).json({ error: "Missing phone" });
+
+    const deleted = await deleteClientByPhoneForUser(phone, userId);
+    if (!deleted) return res.status(404).json({ error: "Client not found" });
+    return res.status(200).json(deleted);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteClientByEmailController = async (req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+    const email = String(req.params.email || "");
+    if (!email) return res.status(400).json({ error: "Missing email" });
+
+    const deleted = await deleteClientByEmailForUser(email, userId);
+    if (!deleted) return res.status(404).json({ error: "Client not found" });
+    return res.status(200).json(deleted);
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+export const deleteClientByNameController = async (req: Request, res: Response) => {
+  try {
+    const userId = getCurrentUserId(req);
+    if (!userId) return res.sendStatus(401);
+    const name = String(req.params.name || "");
+    if (!name) return res.status(400).json({ error: "Missing name" });
+
+    const deleted = await deleteClientByNameForUser(name, userId);
+    if (!deleted) return res.status(404).json({ error: "Client not found" });
+    return res.status(200).json(deleted);
   } catch (err: any) {
     console.error(err);
     return res.status(500).json({ error: err.message });

@@ -7,17 +7,26 @@ import {
   createClient,
   getClientByPhoneController,
   getClientByNameController,
-  getClientByEmailController
+  getClientByEmailController,
+  deleteClientByPhoneController,
+  deleteClientByEmailController,
+  deleteClientByNameController,
 } from "../controllers/clientControllers";
+import {getClientById} from "../db/client";
 
 export default (router: express.Router) => {
-  router.get("/client", isAuthenticated, isOwner, getAllClients);
-
-  router.get("/client/phone/:phone", isAuthenticated, isOwner, getClientByPhoneController);
-  router.get("/client/name/:name", isAuthenticated, isOwner, getClientByNameController);
-  router.get("/client/email/:email", isAuthenticated, isOwner, getClientByEmailController);
-
-  router.delete("/client/:id", isAuthenticated, isOwner, deleteClient);
-  router.patch("/client/:id", isAuthenticated, isOwner, updateClient);
+  router.get("/client", isAuthenticated, getAllClients);
   router.post("/client/", isAuthenticated, createClient);
+
+  router.get("/client/phone/:phone", isAuthenticated, getClientByPhoneController);
+  router.get("/client/name/:name", isAuthenticated, getClientByNameController);
+  router.get("/client/email/:email", isAuthenticated, getClientByEmailController);
+
+  router.delete("/client/phone/:phone", isAuthenticated, deleteClientByPhoneController);
+  router.delete("/client/email/:email", isAuthenticated, deleteClientByEmailController);
+  router.delete("/client/name/:name", isAuthenticated, deleteClientByNameController);
+
+  router.delete("/client/:id", isAuthenticated, isOwner(getClientById), deleteClient);
+  router.patch("/client/:id", isAuthenticated, isOwner(getClientById), updateClient);
+
 };
