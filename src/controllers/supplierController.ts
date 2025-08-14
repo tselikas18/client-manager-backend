@@ -142,7 +142,7 @@ export const getSupplierByEmailController = async (req: Request, res: Response) 
     const currentUserId = (req as any).identity?._id as string | undefined;
     if (!currentUserId) return res.sendStatus(401);
     const email = String(req.params.email || req.query.email || req.body.email);
-    const supplier = await getSupplierByPhoneForUser(email, currentUserId);
+    const supplier = await getSupplierByEmailForUser(email, currentUserId);
     if (!supplier) return res.status(404).json({error: "Not found"});
     return res.status(200).json(supplier);
   } catch (error: any) {
