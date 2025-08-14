@@ -1,16 +1,31 @@
-import express from "express";
 import {isAuthenticated, isOwner} from "../middlewares";
-import {deleteSupplier, getAllSuppliers, updateSupplier, createSupplier} from "../controllers/supplierController";
-import {getSupplierByName, getSupplierByPhone, getSupplierByEmail} from "../db/supplier";
+import express from "express";
+import {
+  deleteSupplier,
+  getAllSuppliers,
+  updateSupplier,
+  createSupplier,
+  getSupplierByPhoneController,
+  getSupplierByNameController,
+  getSupplierByEmailController,
+  deleteSupplierByPhoneController,
+  deleteSupplierByEmailController,
+  deleteSupplierByNameController
+} from "../controllers/supplierController";
+import {getSupplierById} from "../db/supplier";
 
 export default (router: express.Router) => {
   router.get("/supplier", isAuthenticated, getAllSuppliers);
+  router.post("/supplier/", isAuthenticated, createSupplier);
 
-  router.get("/supplier/phone/:phone", isAuthenticated, isOwner, getSupplierByPhone);
-  router.get("/supplier/name/:name", isAuthenticated, isOwner, getSupplierByName);
-  router.get("/supplier/email/:email", isAuthenticated, isOwner, getSupplierByEmail);
+  router.get("/supplier/phone/:phone", isAuthenticated, getSupplierByPhoneController);
+  router.get("/supplier/name/:name", isAuthenticated, getSupplierByNameController);
+  router.get("/supplier/email/:email", isAuthenticated, getSupplierByEmailController);
 
-  router.delete("/supplier/:id", isAuthenticated, isOwner, deleteSupplier);
-  router.patch("/supplier/:id", isAuthenticated, isOwner, updateSupplier);
-  router.post("/supplier/", isAuthenticated, isOwner, createSupplier);
+  router.delete("/supplier/phone/:phone", isAuthenticated, deleteSupplierByPhoneController);
+  router.delete("/supplier/email/:email", isAuthenticated, deleteSupplierByEmailController);
+  router.delete("/supplier/name/:name", isAuthenticated, deleteSupplierByNameController);
+
+  router.delete("/supplier/:id", isAuthenticated, isOwner(getSupplierById), deleteSupplier);
+  router.patch("/supplier/:id", isAuthenticated, isOwner(getSupplierById), updateSupplier);
 };
