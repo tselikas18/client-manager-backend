@@ -1,56 +1,58 @@
-import {deleteUserById, getUserById, getUsers} from "../db/users";
-import {Request, Response} from "express";
+import { Request, Response } from 'express';
+import {
+  getUsers,
+  getUserById,
+  deleteUserById,
+  updateUserById,
+} from '../db/users';
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await getUsers();
     return res.status(200).json(users);
-  }catch (error){
-    console.log(error);
-    return res.status(400);
+  } catch (err) {
+    console.error('getAllUsers error', err);
+    return res.sendStatus(500);
   }
-}
+};
 
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) return res.sendStatus(400);
 
-    const deleteUser = await deleteUserById(id);
+    const existing = await getUserById(id);
+    if (!existing) return res.status(404).json({ message: 'user not found' });
 
-    return res.json(deleteUser);
-  }catch (error){
-    console.log(error);
-    return res.status(400);
+    await deleteUserById(id);
+    return res.sendStatus(204);
+  } catch (err) {
+    console.error('deleteUser error', err);
+    return res.sendStatus(500);
   }
-}
+};
 
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { username, email } = req.body;
+    const values = req.body as Record<string, any>;
+    if (!id) return res.sendStatus(400);
 
-    if (!username) {
-      return res.status(400).json({ error: 'Username is required.' });
+    if (values.authentication) {
+      delete values.authentication;
     }
 
-    const user = await getUserById(id);
+    if (values._id) delete values._id;
 
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
+    const existing = await getUserById(id);
+    if (!existing) return res.status(404).json({ message: 'user not found' });
 
-    user.username = username;
-    user.email = email;
+    await updateUserById(id, values);
 
-    if (!user.authentication) {
-      return res.status(400).json({ error: 'Authentication details are missing.' });
-    }
-
-    await user.save();
-    return res.status(200).json({ message: 'User updated' });
-
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Error updating User' });
+    const updated = await getUserById(id);
+    return res.status(200).json(updated);
+  } catch (err) {
+    console.error('updateUser error', err);
+    return res.sendStatus(500);
   }
 };

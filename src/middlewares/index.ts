@@ -7,15 +7,20 @@ export const isOwner = (getById: (id: string) => Promise<any>) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const currentUserId = (req as any).identity?._id as string | undefined;
+      console.debug('isOwner: currentUserId=', currentUserId);
       if (!currentUserId) return res.sendStatus(401);
 
       const { id } = req.params;
+      console.debug('isOwner: req.params.id=', id, 'method=', req.method);
       if (!id || req.method === 'POST') return next();
 
       const resource = await getById(id);
+      console.debug('isOwner: resource=', resource);
       if (!resource) return res.status(404).json({ message: 'resource not found' });
 
-      if (resource.user_id?.toString() !== currentUserId.toString()) {
+      const resourceOwnerId = resource.user_id ?? resource.userId ?? resource._id;
+      console.debug('isOwner: resourceOwnerId=', resourceOwnerId);
+      if (!resourceOwnerId || resourceOwnerId.toString() !== currentUserId.toString()) {
         return res.status(403).json({ message: 'forbidden action' });
       }
 
@@ -26,6 +31,7 @@ export const isOwner = (getById: (id: string) => Promise<any>) => {
     }
   };
 };
+
 
 export const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
