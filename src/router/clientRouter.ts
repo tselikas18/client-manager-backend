@@ -16,7 +16,7 @@ import {getClientById} from "../db/client";
 
 export default (router: express.Router) => {
   router.get("/clients", isAuthenticated, getAllClients);
-  router.post("/client/", isAuthenticated, createClient);
+  router.post("/clients/", isAuthenticated, createClient);
 
   router.get("/client/phone/:phone", isAuthenticated, getClientByPhoneController);
   router.get("/client/name/:name", isAuthenticated, getClientByNameController);

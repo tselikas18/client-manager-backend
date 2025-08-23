@@ -13,6 +13,7 @@ const app = express();
 const databaseURL = config.MONGODB_URL;
 
 app.use(cors({
+  origin: 'http://localhost:5173',
   credentials: true,
 }));
 

@@ -31,8 +31,11 @@ export const login = async (req: Request, res: Response) => {
     await user.save();
 
     res.cookie('authenticated', user.authentication?.sessionToken, {
-      domain: 'localhost',
-      path: '/'
+      httpOnly: true,
+      path: '/',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({

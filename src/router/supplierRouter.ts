@@ -16,7 +16,7 @@ import {getSupplierById} from "../db/supplier";
 
 export default (router: express.Router) => {
   router.get("/suppliers", isAuthenticated, getAllSuppliers);
-  router.post("/supplier/", isAuthenticated, createSupplier);
+  router.post("/suppliers/", isAuthenticated, createSupplier);
 
   router.get("/supplier/phone/:phone", isAuthenticated, getSupplierByPhoneController);
   router.get("/supplier/name/:name", isAuthenticated, getSupplierByNameController);
