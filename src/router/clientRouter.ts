@@ -15,7 +15,7 @@ import {
 import {getClientById} from "../db/client";
 
 export default (router: express.Router) => {
-  router.get("/client", isAuthenticated, getAllClients);
+  router.get("/clients", isAuthenticated, getAllClients);
   router.post("/client/", isAuthenticated, createClient);
 
   router.get("/client/phone/:phone", isAuthenticated, getClientByPhoneController);
@@ -28,5 +28,5 @@ export default (router: express.Router) => {
 
   router.delete("/client/:id", isAuthenticated, isOwner(getClientById), deleteClient);
   router.patch("/client/:id", isAuthenticated, isOwner(getClientById), updateClient);
-
+  router.put("/client/:id", isAuthenticated, isOwner(getClientById), updateClient);
 };

@@ -15,7 +15,7 @@ import {
 import {getSupplierById} from "../db/supplier";
 
 export default (router: express.Router) => {
-  router.get("/supplier", isAuthenticated, getAllSuppliers);
+  router.get("/suppliers", isAuthenticated, getAllSuppliers);
   router.post("/supplier/", isAuthenticated, createSupplier);
 
   router.get("/supplier/phone/:phone", isAuthenticated, getSupplierByPhoneController);
@@ -28,4 +28,5 @@ export default (router: express.Router) => {
 
   router.delete("/supplier/:id", isAuthenticated, isOwner(getSupplierById), deleteSupplier);
   router.patch("/supplier/:id", isAuthenticated, isOwner(getSupplierById), updateSupplier);
+  router.put("/supplier/:id", isAuthenticated, isOwner(getSupplierById), updateSupplier);
 };

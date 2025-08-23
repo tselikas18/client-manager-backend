@@ -56,3 +56,22 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.sendStatus(500);
   }
 };
+
+export const getMe = async (req: Request, res: Response) => {
+  try {
+    const identity = (req as any).identity;
+    if (!identity) return res.sendStatus(401);
+
+    const user = identity.toObject ? identity.toObject() : identity;
+
+    delete (user as any).authentication;
+    delete (user as any).password;
+    delete (user as any).salt;
+    delete (user as any).sessionToken;
+
+    return res.status(200).json(user);
+  } catch (err) {
+    console.error('getMe error', err);
+    return res.sendStatus(500);
+  }
+};
