@@ -18,15 +18,15 @@ export default (router: express.Router) => {
   router.get("/clients", isAuthenticated, getAllClients);
   router.post("/clients/", isAuthenticated, createClient);
 
-  router.get("/client/phone/:phone", isAuthenticated, getClientByPhoneController);
-  router.get("/client/name/:name", isAuthenticated, getClientByNameController);
-  router.get("/client/email/:email", isAuthenticated, getClientByEmailController);
+  router.get("/clients/phone/:phone", isAuthenticated, getClientByPhoneController);
+  router.get("/clients/name/:name", isAuthenticated, getClientByNameController);
+  router.get("/clients/email/:email", isAuthenticated, getClientByEmailController);
 
-  router.delete("/client/phone/:phone", isAuthenticated, deleteClientByPhoneController);
-  router.delete("/client/email/:email", isAuthenticated, deleteClientByEmailController);
-  router.delete("/client/name/:name", isAuthenticated, deleteClientByNameController);
+  router.delete("/clients/phone/:phone", isAuthenticated, deleteClientByPhoneController);
+  router.delete("/clients/email/:email", isAuthenticated, deleteClientByEmailController);
+  router.delete("/clients/name/:name", isAuthenticated, deleteClientByNameController);
 
-  router.delete("/client/:id", isAuthenticated, isOwner(getClientById), deleteClient);
-  router.patch("/client/:id", isAuthenticated, isOwner(getClientById), updateClient);
-  router.put("/client/:id", isAuthenticated, isOwner(getClientById), updateClient);
+  router.delete("/clients/:id", isAuthenticated, isOwner(getClientById), deleteClient);
+  router.patch("/clients/:id", isAuthenticated, isOwner(getClientById), updateClient);
+  router.put("/clients/:id", isAuthenticated, isOwner(getClientById), updateClient);
 };
