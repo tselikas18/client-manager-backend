@@ -3,20 +3,18 @@ import mongoose from 'mongoose';
 const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 const clientSchema = new mongoose.Schema({
-  user_id: {type: String, required: true},
-  name: {type: String, required: true, trim: true},
-  phone: {type: String, trim: true},
+  user_id: { type: String, required: true },
+  name: { type: String, required: true, trim: true },
+  phone: { type: String, trim: true },
   email: {
     type: String,
     trim: true,
-    validate: {
-      validator(v) { return !v || emailRegex.test(v); }
-    }
+    validate: { validator(v) { return !v || emailRegex.test(v); } }
   },
-  amount_owed: {type: Number, default: 0.0},
-  notes: {type: String},
-  created_at: {type: Date, default: Date.now},
-  updated_at: {type: Date, default: Date.now}
+  amount_owed: { type: Number, default: 0.0 },
+  notes: { type: String },
+}, {
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
 clientSchema.index({ user_id: 1, email: 1 }, { unique: true, sparse: true });
