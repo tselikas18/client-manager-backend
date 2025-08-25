@@ -39,9 +39,25 @@ export const getAllClients = async (req: Request, res: Response) => {
     const currentUserId = (req as any).identity?._id as string | undefined;
     if (!currentUserId) return res.sendStatus(401);
 
+    const searchRaw = (req.query.search as string | undefined) ?? "";
+    const search = searchRaw.trim();
+
     const clients = await getClientsByUserId(currentUserId);
 
-    return res.status(200).json(clients);
+    if (!search) {
+      return res.status(200).json(clients);
+    }
+
+    const esc = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp("^" + esc, "i");
+    const filtered = clients.filter((c: any) =>
+        (c.name && re.test(c.name)) ||
+        (c.email && re.test(c.email)) ||
+        (c.phone && re.test(c.phone))
+    );
+
+    console.log(`search="${search}" -> ${filtered.length} matches`);
+    return res.status(200).json(filtered);
   } catch (error: any) {
     console.error(error);
     return res.status(400).json({ error: error.message });

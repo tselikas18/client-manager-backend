@@ -35,14 +35,33 @@ export const getAllSuppliers = async (req: Request, res: Response) => {
     const currentUserId = (req as any).identity?._id as string | undefined;
     if (!currentUserId) return res.sendStatus(401);
 
+    const searchRaw = (req.query.search as string | undefined) ?? "";
+    const search = searchRaw.trim();
+
+    console.log("GET /suppliers req.query:", req.query, "user:", currentUserId);
+
     const suppliers = await getSuppliersByUserId(currentUserId);
 
-    return res.status(200).json(suppliers);
+    if (!search) {
+      return res.status(200).json(suppliers);
+    }
+
+    const esc = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp("^" + esc, "i");
+
+    const filtered = suppliers.filter((s: any) =>
+        (s.name && re.test(s.name)) ||
+        (s.email && re.test(s.email)) ||
+        (s.phone && re.test(s.phone))
+    );
+
+    console.log(`search="${search}" -> ${filtered.length} matches`);
+    return res.status(200).json(filtered);
   } catch (error: any) {
     console.log(error);
-    return res.status(400).json({error: error.message});
+    return res.status(400).json({ error: error.message });
   }
-}
+};
 
 export const deleteSupplier = async (req: Request, res: Response) => {
   try {
