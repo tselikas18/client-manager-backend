@@ -14,11 +14,14 @@ import {
 import { Request, Response} from "express";
 import {z} from "zod";
 
+const emailPre = z.preprocess((v) => v === '' ? undefined : v,
+    z.string().email().optional()
+);
 
 const createClientSchema = z.object({
   name: z.string().min(1),
   phone: z.string().trim().min(7).optional().default(""),
-  email: z.string().email().optional().default(""),
+  email: emailPre.default(''),
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -26,7 +29,7 @@ const createClientSchema = z.object({
 const updateClientSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().trim().min(7).optional(),
-  email: z.string().email().optional(),
+  email: emailPre.default(''),
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -125,6 +128,17 @@ export const createClient = async (req: Request, res: Response) => {
         ? await getClientByNameForUser(parsed.name, currentUserId)
         : null;
     if (existingByName) return res.status(400).json({ error: "Name already exists" });
+
+    if (parsed.amount_owed === undefined || parsed.amount_owed === null) {
+      return res.status(400).json({ error: 'Please provide the Amount Owed.' });
+    }
+    if ( Number.isNaN(parsed.amount_owed)) {
+      return res.status(400).json({ error: 'Amount Owed must be a valid number.' });
+    }
+
+    if (parsed.phone.length < 8){
+      return res.status(400).json({ error: "Please enter a valid phone number." });
+    }
 
     const payload = { ...parsed, user_id: currentUserId };
     const created = await dbCreateClient(payload);

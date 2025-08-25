@@ -1,10 +1,18 @@
 import mongoose from 'mongoose';
 
+const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+
 const clientSchema = new mongoose.Schema({
   user_id: {type: String, required: true},
   name: {type: String, required: true, trim: true},
   phone: {type: String, trim: true},
-  email: {type: String, trim: true, match: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/},
+  email: {
+    type: String,
+    trim: true,
+    validate: {
+      validator(v) { return !v || emailRegex.test(v); }
+    }
+  },
   amount_owed: {type: Number, default: 0.0},
   notes: {type: String},
   created_at: {type: Date, default: Date.now},
@@ -19,9 +27,6 @@ export const ClientModel = mongoose.model('Client', clientSchema);
 //controller helpers
 export const getClientsByUserId = (user_id : string) => ClientModel.find({user_id});
 export const getClientById = (id: string) => ClientModel.findById(id);
-export const getClientByName = (name: string) => ClientModel.find({name});
-export const getClientByEmail = (email: string) => ClientModel.findOne({ email });
-export const getClientByPhone = (phone: string) => ClientModel.findOne({ phone });
 export const getClientByEmailForUser = (email: string, user_id: string) => ClientModel.findOne({ email, user_id });
 export const getClientByPhoneForUser = (phone: string, user_id: string) => ClientModel.findOne({ phone, user_id });
 export const getClientByNameForUser = (name: string, user_id: string) => ClientModel.findOne({ name, user_id });
