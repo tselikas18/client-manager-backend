@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-
-export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+import {emailRegex} from "../helpers";
 
 const clientSchema = new mongoose.Schema({
   user_id: { type: String, required: true },
@@ -19,10 +18,11 @@ const clientSchema = new mongoose.Schema({
 
 clientSchema.index({ user_id: 1, email: 1 }, { unique: true, sparse: true });
 clientSchema.index({ user_id: 1, phone: 1 }, { unique: true, sparse: true });
-
-export const ClientModel = mongoose.model('Client', clientSchema);
+clientSchema.index({ user_id: 1, name: 1 }, { unique: true });
+clientSchema.index({ user_id: 1, created_at: -1 });
 
 //controller helpers
+export const ClientModel = mongoose.model('Client', clientSchema);
 export const getClientsByUserId = (user_id : string) => ClientModel.find({user_id});
 export const getClientById = (id: string) => ClientModel.findById(id);
 export const getClientByEmailForUser = (email: string, user_id: string) => ClientModel.findOne({ email, user_id });

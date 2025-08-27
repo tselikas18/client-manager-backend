@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import {emailRegex} from "./client";
+import {emailRegex} from "../helpers";
 
 const supplierSchema = new mongoose.Schema({
   user_id: { type: String, required: true },
@@ -18,7 +18,8 @@ const supplierSchema = new mongoose.Schema({
 
 supplierSchema.index({ user_id: 1, email: 1 }, { unique: true, sparse: true });
 supplierSchema.index({ user_id: 1, phone: 1 }, { unique: true, sparse: true });
-supplierSchema.index({ user_id: 1, name: 1 }, { unique: false });
+supplierSchema.index({ user_id: 1, name: 1 }, { unique: true });
+supplierSchema.index({ user_id: 1, created_at: -1 });
 
 //controller helpers
 export const SupplierModel = mongoose.model('Supplier', supplierSchema);
@@ -26,6 +27,7 @@ export const getSuppliersByUserId = (user_id: string) => SupplierModel.find({ us
 export const getSupplierById = (id: string) => SupplierModel.findById(id);
 export const getSupplierByPhoneForUser = (phone: string, user_id: string) => SupplierModel.findOne({ phone, user_id });
 export const getSupplierByEmailForUser = (email: string, user_id: string) => SupplierModel.findOne({ email, user_id });
+export const getSupplierByNameForUser = (name: string, user_id: string) => SupplierModel.findOne({ name, user_id });
 export const dbCreateSupplier = (values: Record<string, any>) => new SupplierModel(values).save().then(doc => doc.toObject());
 export const deleteSupplierById = (id: string) => SupplierModel.findOneAndDelete({ _id: id });
 export const updateSupplierById = (id: string, values: Record<string, any>) => SupplierModel.findOneAndUpdate({ _id: id }, values, { new: true });

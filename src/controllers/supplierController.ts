@@ -5,29 +5,21 @@ import {
   getSupplierByPhoneForUser,
   getSuppliersByUserId,
   dbCreateSupplier,
-  updateSupplierById,
+  updateSupplierById, getSupplierByNameForUser,
 } from "../db/supplier";
 import {Request, Response} from "express";
 import {z} from "zod";
-import {emailRegex} from "../db/client";
+import {getCurrentUserId, emailRegex} from "../helpers";
 
 const emailPre = z.preprocess((v) => v === '' ? undefined : v,
     z.string().email().optional()
 );
 
-const createSupplierSchema = z.object({
+const createOrUpdateSupplierSchema = z.object({
   name: z.string().min(1),
-  phone: z.string().trim().min(10).optional().default(""),
+  phone: z.string().trim().min(8).optional().default(""),
   email: emailPre.optional().default(''),
-  amount_owed: z.number().positive().default(0.0).optional(),
-  notes: z.string().optional(),
-})
-
-const updateSupplierSchema = z.object({
-  name: z.string().min(1).optional(),
-  phone: z.string().trim().min(10).optional(),
-  email: z.string().optional().default(''),  // Change to string and validate manually
-  amount_owed: z.number().positive().default(0.0).optional(),
+  amount_owed: z.number().min(0, "Amount must be non-negative"),
   notes: z.string().optional(),
 })
 /**
@@ -88,7 +80,27 @@ export const getAllSuppliers = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 };
-
+/**
+ * @swagger
+ * /suppliers/{id}:
+ *   delete:
+ *     summary: Delete a supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Supplier ID
+ *     responses:
+ *       200:
+ *         description: Supplier deleted successfully
+ *       404:
+ *         description: Supplier not found
+ */
 export const deleteSupplier = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -99,14 +111,56 @@ export const deleteSupplier = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 };
-
+/**
+ * @swagger
+ * /suppliers/{id}:
+ *   patch:
+ *     summary: Update a supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Client ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               amount_owed:
+ *                 type: number
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Supplier updated successfully
+ *       400:
+ *         description: Validation error
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Supplier not found
+ */
 export const updateSupplier = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     if (!id)
       return res.sendStatus(400).json({error: "Missing supplier id"});
 
-    const payload = updateSupplierSchema.parse(req.body);
+    const payload = createOrUpdateSupplierSchema.parse(req.body);
 
     if (payload.email && !emailRegex.test(payload.email)) {
       return res.status(400).json({ error: "Please enter a valid email address" });
@@ -182,13 +236,13 @@ export const updateSupplier = async (req: Request, res: Response) => {
  */
 export const createSupplier = async (req: Request, res: Response) => {
   try {
-    const parsed = createSupplierSchema.parse(req.body);
+    const parsed = createOrUpdateSupplierSchema.parse(req.body);
 
     if (parsed.email && !emailRegex.test(parsed.email)) {
       return res.status(400).json({ error: "Please enter a valid email address" });
     }
 
-    const currentUserId = (req as any).identity?._id as string | undefined;
+    const currentUserId = getCurrentUserId(req)
     if (!currentUserId) return res.sendStatus(401);
 
     const existingByEmail = parsed.email
@@ -201,15 +255,21 @@ export const createSupplier = async (req: Request, res: Response) => {
         : null;
     if (existingByPhone) return res.status(400).json({ error: "Phone already exists" });
 
+    const existingByName = parsed.name
+        ? await getSupplierByNameForUser(parsed.name, currentUserId)
+        : null;
+    if (existingByName) return res.status(400).json({ error: "Name already exists" });
+
     if (parsed.amount_owed === undefined || parsed.amount_owed === null) {
       return res.status(400).json({ error: 'Please provide the Amount Owed.' });
-    }
-    if (Number.isNaN(parsed.amount_owed)) {
-      return res.status(400).json({ error: 'Amount Owed must be a valid number.' });
     }
 
     if (parsed.phone && parsed.phone.length < 8){
       return res.status(400).json({ error: "Please enter a valid phone number." });
+    }
+
+    if (parsed.amount_owed < 0){
+      return res.status(400).json({ error: "Amount owed can't be negative" });
     }
 
     const payload = { ...parsed, user_id: currentUserId };

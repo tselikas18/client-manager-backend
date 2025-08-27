@@ -5,35 +5,23 @@ import {
   getClientById,
   updateClientById,
   getClientByEmailForUser,
-  getClientByPhoneForUser,
-  getClientByNameForUser
+  getClientByPhoneForUser, getClientByNameForUser,
 } from "../db/client";
 import { Request, Response} from "express";
 import {z} from "zod";
-import {emailRegex} from "../db/client";
+import {getCurrentUserId, emailRegex} from "../helpers";
 
 const emailPre = z.preprocess((v) => v === '' ? undefined : v,
     z.string().email().optional()
 );
 
-const createClientSchema = z.object({
+const createOrUpdateClientSchema = z.object({
   name: z.string().min(1),
-  phone: z.string().trim().min(10).optional().default(""),
+  phone: z.string().trim().min(8).optional().default(""),
   email: emailPre.optional().default(''),
-  amount_owed: z.number().positive().default(0.0).optional(),
+  amount_owed: z.number(),
   notes: z.string().optional(),
 })
-
-const updateClientSchema = z.object({
-  name: z.string().min(1).optional(),
-  phone: z.string().trim().min(10).optional(),
-  email: z.string().optional().default(''),  // Change to string and validate manually
-  amount_owed: z.number().positive().default(0.0).optional(),
-  notes: z.string().optional(),
-})
-
-const getCurrentUserId = (req: Request): string | null =>
-    (req as any).identity?._id ?? null;
 /**
  * @swagger
  * /clients:
@@ -115,13 +103,14 @@ export const getAllClients = async (req: Request, res: Response) => {
 export const deleteClient = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
-    const deleteClient = await deleteClientById(id);
-
-    return res.json(deleteClient);
+    const deleted = await deleteClientById(id);
+    if (!deleted) {
+      return res.status(404).json({ error: "Client not found" });
+    }
+    return res.status(200).json({ message: "Client deleted successfully" });
   } catch (error) {
-    console.log(error);
-    return res.status(400);
+    console.error(error);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
 /**
@@ -174,7 +163,7 @@ export const updateClient = async (req: Request, res: Response) => {
     if (!id)
       return res.sendStatus(400).json({error: "Missing client id"});
 
-    const payload = updateClientSchema.parse(req.body);
+    const payload = createOrUpdateClientSchema.parse(req.body);
 
     if (payload.email && !emailRegex.test(payload.email)) {
       return res.status(400).json({ error: "Please enter a valid email address" });
@@ -251,7 +240,7 @@ export const updateClient = async (req: Request, res: Response) => {
 
 export const createClient = async (req: Request, res: Response) => {
   try {
-    const parsed = createClientSchema.parse(req.body);
+    const parsed = createOrUpdateClientSchema.parse(req.body);
 
     if (parsed.email && !emailRegex.test(parsed.email)) {
       return res.status(400).json({ error: "Please enter a valid email address" });
@@ -275,15 +264,12 @@ export const createClient = async (req: Request, res: Response) => {
         : null;
     if (existingByName) return res.status(400).json({ error: "Name already exists" });
 
-    if (parsed.amount_owed === undefined || parsed.amount_owed === null) {
-      return res.status(400).json({ error: 'Please provide the Amount Owed.' });
-    }
-    if (Number.isNaN(parsed.amount_owed)) {
-      return res.status(400).json({ error: 'Amount Owed must be a valid number.' });
-    }
-
     if (parsed.phone && parsed.phone.length < 8){
       return res.status(400).json({ error: "Please enter a valid phone number." });
+    }
+
+    if (parsed.amount_owed < 0){
+      return res.status(400).json({ error: "Amount owed can't be negative" });
     }
 
     const payload = { ...parsed, user_id: currentUserId };
