@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+export const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 const clientSchema = new mongoose.Schema({
   user_id: { type: String, required: true },
