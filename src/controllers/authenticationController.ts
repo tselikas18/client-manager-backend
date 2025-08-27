@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
-import { createUser, getUserByEmail, getUserBySessionToken } from "../db/users";
+import { createUser, getUserByEmail, getUserById } from "../db/users";
 import { random, authentication } from "../helpers";
+import jwt from "jsonwebtoken";
+import { config } from "../../config";
 
 const mapToSafeUser = (user: any) => ({
   id: user._id?.toString() ?? user.id,
@@ -26,14 +28,16 @@ export const login = async (req: Request, res: Response) => {
       return res.status(403).send({ error: "Passwords do not match" });
     }
 
-    const sessionSalt = random();
-    if (user.authentication) {
-      user.authentication.sessionToken = authentication(sessionSalt, user._id.toString());
-    }
+    const token = jwt.sign(
+        {
+          userId: user._id.toString(),
+          email: user.email
+        },
+        config.JWT_SECRET,
+        { expiresIn: '7d' }
+    );
 
-    await user.save();
-
-    res.cookie("authenticated", user.authentication?.sessionToken, {
+    res.cookie("authenticated", token, {
       httpOnly: true,
       path: "/",
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
@@ -89,7 +93,9 @@ export const me = async (req: Request, res: Response) => {
     const token = req.cookies?.authenticated;
     if (!token) return res.status(401).json({ error: "Not authenticated" });
 
-    const user = await getUserBySessionToken(token);
+    const decoded = jwt.verify(token, config.JWT_SECRET) as any;
+    const user = await getUserById(decoded.userId);
+
     if (!user) return res.status(401).json({ error: "Not authenticated" });
 
     return res.status(200).json(mapToSafeUser(user));

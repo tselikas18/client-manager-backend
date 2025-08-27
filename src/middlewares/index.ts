@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction, } from 'express';
 import express from "express";
-import {getUserBySessionToken} from "../db/users";
+import { getUserById } from "../db/users";
+import jwt from "jsonwebtoken";
+import { config } from "../../config";
 
 //Ownership middleware
 export const isOwner = (getById: (id: string) => Promise<any>) => {
@@ -32,13 +34,14 @@ export const isOwner = (getById: (id: string) => Promise<any>) => {
   };
 };
 
-
 export const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
-    const sessionToken = req.cookies['authenticated'];
-    if (!sessionToken) return res.sendStatus(401);
+    const token = req.cookies['authenticated'];
+    if (!token) return res.sendStatus(401);
 
-    const existingUser = await getUserBySessionToken(sessionToken);
+    const decoded = jwt.verify(token, config.JWT_SECRET) as any;
+    const existingUser = await getUserById(decoded.userId);
+
     if (!existingUser) return res.sendStatus(401);
 
     (req as any).identity = existingUser;
@@ -47,6 +50,6 @@ export const isAuthenticated = async (req: express.Request, res: express.Respons
     return next();
   } catch (error) {
     console.error(error);
-    return res.sendStatus(400);
+    return res.sendStatus(401);
   }
 }
