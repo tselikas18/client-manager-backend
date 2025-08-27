@@ -6,6 +6,24 @@ import {
   updateUserById,
 } from '../db/users';
 
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: List of users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ */
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
     const users = await getUsers();
@@ -15,7 +33,27 @@ export const getAllUsers = async (req: Request, res: Response) => {
     return res.sendStatus(500);
   }
 };
-
+/**
+ * @swagger
+ * /users/{id}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       204:
+ *         description: User deleted successfully
+ *       404:
+ *         description: User not found
+ */
 export const deleteUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -31,7 +69,39 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res.sendStatus(500);
   }
 };
-
+/**
+ * @swagger
+ * /users/{id}:
+ *   patch:
+ *     summary: Update user
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       404:
+ *         description: User not found
+ */
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -56,7 +126,24 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.sendStatus(500);
   }
 };
-
+/**
+ * @swagger
+ * /users/me:
+ *   get:
+ *     summary: Get current user profile
+ *     tags: [Users]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ */
 export const getMe = async (req: Request, res: Response) => {
   try {
     const identity = (req as any).identity;

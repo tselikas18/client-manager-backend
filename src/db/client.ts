@@ -32,7 +32,4 @@ export const dbCreateClient = (values: Record<string, any>) => new ClientModel(v
     .save()
     .then((client) => client.toObject());
 export const deleteClientById = (id: string) => ClientModel.findOneAndDelete({ _id: id });
-export const deleteClientByPhoneForUser = (phone: string, user_id: string) => ClientModel.findOneAndDelete({ phone, user_id });
-export const deleteClientByEmailForUser = (email: string, user_id: string) => ClientModel.findOneAndDelete({ email, user_id });
-export const deleteClientByNameForUser = (name: string, user_id: string) => ClientModel.findOneAndDelete({ name, user_id });
 export const updateClientById = (id: string, values: Record<string, any>) => ClientModel.findByIdAndUpdate(id, values, { new: true });

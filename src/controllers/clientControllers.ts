@@ -4,9 +4,6 @@ import {
   dbCreateClient,
   getClientById,
   updateClientById,
-  deleteClientByPhoneForUser,
-  deleteClientByEmailForUser,
-  deleteClientByNameForUser,
   getClientByEmailForUser,
   getClientByPhoneForUser,
   getClientByNameForUser
@@ -37,6 +34,32 @@ const updateClientSchema = z.object({
 
 const getCurrentUserId = (req: Request): string | null =>
     (req as any).identity?._id ?? null;
+/**
+ * @swagger
+ * /clients:
+ *   get:
+ *     summary: Get all clients for the authenticated user
+ *     tags: [Clients]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering clients
+ *     responses:
+ *       200:
+ *         description: List of clients
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Client'
+ *       401:
+ *         description: Unauthorized
+ */
 
 export const getAllClients = async (req: Request, res: Response) => {
   try {
@@ -67,6 +90,27 @@ export const getAllClients = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 };
+/**
+ * @swagger
+ * /clients/{id}:
+ *   delete:
+ *     summary: Delete a client
+ *     tags: [Clients]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Client ID
+ *     responses:
+ *       200:
+ *         description: Client deleted successfully
+ *       404:
+ *         description: Client not found
+ */
 
 export const deleteClient = async (req: Request, res: Response) => {
   try {
@@ -80,6 +124,49 @@ export const deleteClient = async (req: Request, res: Response) => {
     return res.status(400);
   }
 }
+/**
+ * @swagger
+ * /clients/{id}:
+ *   patch:
+ *     summary: Update a client
+ *     tags: [Clients]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Client ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               amount_owed:
+ *                 type: number
+ *               notes:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Client updated successfully
+ *       400:
+ *         description: Validation error
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Client not found
+ */
 
 export const updateClient = async (req: Request, res: Response) => {
   try {
@@ -113,6 +200,54 @@ export const updateClient = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 };
+/**
+ * @swagger
+ * /clients:
+ *   post:
+ *     summary: Create a new client
+ *     tags: [Clients]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - amount_owed
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: John Smith
+ *               phone:
+ *                 type: string
+ *                 example: "1234567890"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john@example.com
+ *               amount_owed:
+ *                 type: number
+ *                 example: 1500.00
+ *               notes:
+ *                 type: string
+ *                 example: Important client
+ *     responses:
+ *       201:
+ *         description: Client created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Client'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 
 export const createClient = async (req: Request, res: Response) => {
   try {
@@ -160,95 +295,3 @@ export const createClient = async (req: Request, res: Response) => {
   }
 };
 
-export const getClientByPhoneController = async (req: Request, res: Response) => {
-  try {
-    const phone = String(req.params.phone || req.query.phone || req.body.phone);
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-
-    const client = await getClientByPhoneForUser(phone, userId);
-    if (!client) return res.status(404).json({ error: "Phone not found" });
-    return res.status(200).json(client);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const getClientByNameController = async (req: Request, res: Response) => {
-  try {
-    const name = String(req.params.name || req.query.name || req.body.name);
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-
-    const client = await getClientByNameForUser(name, userId);
-    if (!client) return res.status(404).json({ error: "Name not found" });
-    return res.status(200).json(client);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const getClientByEmailController = async (req: Request, res: Response) => {
-  try {
-    const email = String(req.params.email || req.query.email || req.body.email);
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-
-    const client = await getClientByEmailForUser(email, userId);
-    if (!client) return res.status(404).json({ error: "Email not found" });
-    return res.status(200).json(client);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const deleteClientByPhoneController = async (req: Request, res: Response) => {
-  try {
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-    const phone = String(req.params.phone || "");
-    if (!phone) return res.status(400).json({ error: "Missing phone" });
-
-    const deleted = await deleteClientByPhoneForUser(phone, userId);
-    if (!deleted) return res.status(404).json({ error: "Client not found" });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const deleteClientByEmailController = async (req: Request, res: Response) => {
-  try {
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-    const email = String(req.params.email || "");
-    if (!email) return res.status(400).json({ error: "Missing email" });
-
-    const deleted = await deleteClientByEmailForUser(email, userId);
-    if (!deleted) return res.status(404).json({ error: "Client not found" });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const deleteClientByNameController = async (req: Request, res: Response) => {
-  try {
-    const userId = getCurrentUserId(req);
-    if (!userId) return res.sendStatus(401);
-    const name = String(req.params.name || "");
-    if (!name) return res.status(400).json({ error: "Missing name" });
-
-    const deleted = await deleteClientByNameForUser(name, userId);
-    if (!deleted) return res.status(404).json({ error: "Client not found" });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};

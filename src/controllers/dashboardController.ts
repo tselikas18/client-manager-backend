@@ -3,6 +3,24 @@ import { getClientsByUserId } from '../db/client';
 import { getSuppliersByUserId } from '../db/supplier';
 import { ClientType, SupplierType, DashboardResponse } from '../types';
 
+/**
+ * @swagger
+ * /dashboard:
+ *   get:
+ *     summary: Get dashboard statistics
+ *     tags: [Dashboard]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DashboardStats'
+ *       401:
+ *         description: Unauthorized
+ */
 export const getDashboardStats = async (req: Request, res: Response) => {
   try {
     const currentUserId = (req as any).identity?._id as string | undefined;

@@ -7,7 +7,8 @@ import cors from 'cors'
 import mongoose from "mongoose";
 import { config } from "../config"
 import router from './router/indexRouter'
-
+import swaggerUi from 'swagger-ui-express';
+import {specs} from "./swagger/swaggerConfig";
 
 const app = express();
 const databaseURL = config.MONGODB_URL;
@@ -20,6 +21,7 @@ app.use(cors({
 app.use(compression());
 app.use(cookieParser());
 app.use(bodyParser.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
 const server = http.createServer(app)
 

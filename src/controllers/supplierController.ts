@@ -1,15 +1,11 @@
 import {
   getSupplierById,
   deleteSupplierById,
-  getSupplierByNameForUser,
   getSupplierByEmailForUser,
   getSupplierByPhoneForUser,
   getSuppliersByUserId,
   dbCreateSupplier,
   updateSupplierById,
-  deleteSupplierByPhoneForUser,
-  deleteSupplierByEmailForUser,
-  deleteSupplierByNameForUser
 } from "../db/supplier";
 import {Request, Response} from "express";
 import {z} from "zod";
@@ -34,7 +30,32 @@ const updateSupplierSchema = z.object({
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
-
+/**
+ * @swagger
+ * /suppliers:
+ *   get:
+ *     summary: Get all suppliers for the authenticated user
+ *     tags: [Suppliers]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search term for filtering suppliers
+ *     responses:
+ *       200:
+ *         description: List of suppliers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Supplier'
+ *       401:
+ *         description: Unauthorized
+ */
 export const getAllSuppliers = async (req: Request, res: Response) => {
   try {
     const currentUserId = (req as any).identity?._id as string | undefined;
@@ -111,7 +132,54 @@ export const updateSupplier = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 };
-
+/**
+ * @swagger
+ * /suppliers:
+ *   post:
+ *     summary: Create a new supplier
+ *     tags: [Suppliers]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - amount_owed
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: ABC Supply Co
+ *               phone:
+ *                 type: string
+ *                 example: "9876543210"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: contact@abcsupply.com
+ *               amount_owed:
+ *                 type: number
+ *                 example: 500.00
+ *               notes:
+ *                 type: string
+ *                 example: Regular supplier
+ *     responses:
+ *       201:
+ *         description: Supplier created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Supplier'
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 export const createSupplier = async (req: Request, res: Response) => {
   try {
     const parsed = createSupplierSchema.parse(req.body);
@@ -156,93 +224,3 @@ export const createSupplier = async (req: Request, res: Response) => {
     return res.status(400).json({ error: error.message });
   }
 }
-
-export const getSupplierByPhoneController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const phone = String(req.params.phone || req.query.phone || req.body.phone);
-    const supplier = await getSupplierByPhoneForUser(phone, currentUserId);
-    if (!supplier) return res.status(404).json({error: "Not found"});
-    return res.status(200).json(supplier);
-  } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({error: error.message});
-  }
-}
-
-export const getSupplierByNameController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const name = String(req.params.name || req.query.name || req.body.name);
-    const supplier = await getSupplierByNameForUser(name, currentUserId);
-    if (!supplier) return res.status(404).json({error: "Not found"});
-    return res.status(200).json(supplier);
-  } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({error: error.message});
-  }
-}
-
-export const getSupplierByEmailController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const email = String(req.params.email || req.query.email || req.body.email);
-    const supplier = await getSupplierByEmailForUser(email, currentUserId);
-    if (!supplier) return res.status(404).json({error: "Not found"});
-    return res.status(200).json(supplier);
-  } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({error: error.message});
-  }
-}
-
-export const deleteSupplierByPhoneController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const phone = String(req.params.phone || req.body.phone || req.query.phone || '');
-    if (!phone) return res.status(400).json({ error: 'Missing phone' });
-
-    const deleted = await deleteSupplierByPhoneForUser(phone, currentUserId);
-    if (!deleted) return res.status(404).json({ error: 'Not found' });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const deleteSupplierByEmailController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const email = String(req.params.email || req.body.email || req.query.email || '');
-    if (!email) return res.status(400).json({ error: 'Missing email' });
-
-    const deleted = await deleteSupplierByEmailForUser(email, currentUserId);
-    if (!deleted) return res.status(404).json({ error: 'Not found' });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
-
-export const deleteSupplierByNameController = async (req: Request, res: Response) => {
-  try {
-    const currentUserId = (req as any).identity?._id as string | undefined;
-    if (!currentUserId) return res.sendStatus(401);
-    const name = String(req.params.name || req.body.name || req.query.name || '');
-    if (!name) return res.status(400).json({ error: 'Missing name' });
-
-    const deleted = await deleteSupplierByNameForUser(name, currentUserId);
-    if (!deleted) return res.status(404).json({ error: 'Not found' });
-    return res.status(200).json(deleted);
-  } catch (err: any) {
-    console.error(err);
-    return res.status(500).json({ error: err.message });
-  }
-};
