@@ -12,10 +12,9 @@ import {specs} from "./swagger/swaggerConfig";
 
 const app = express();
 const databaseURL = config.MONGODB_URL;
-// 'http://localhost:5173'
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://client-manager-frontend-676t.onrender.com',
+  origin: config.FRONTEND_URL || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
