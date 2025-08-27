@@ -13,6 +13,7 @@ import {
 } from "../db/supplier";
 import {Request, Response} from "express";
 import {z} from "zod";
+import {emailRegex} from "../db/client";
 
 const emailPre = z.preprocess((v) => v === '' ? undefined : v,
     z.string().email().optional()
@@ -21,7 +22,7 @@ const emailPre = z.preprocess((v) => v === '' ? undefined : v,
 const createSupplierSchema = z.object({
   name: z.string().min(1),
   phone: z.string().trim().min(10).optional().default(""),
-  email: emailPre.default(''),
+  email: emailPre.optional().default(''),
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -29,7 +30,7 @@ const createSupplierSchema = z.object({
 const updateSupplierSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().trim().min(10).optional(),
-  email: emailPre.default(''),
+  email: z.string().optional().default(''),  // Change to string and validate manually
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -85,6 +86,11 @@ export const updateSupplier = async (req: Request, res: Response) => {
       return res.sendStatus(400).json({error: "Missing supplier id"});
 
     const payload = updateSupplierSchema.parse(req.body);
+
+    if (payload.email && !emailRegex.test(payload.email)) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
     if (Object.keys(payload).length === 0)
       return res.sendStatus(400).json({error: "No fields to update"});
 
@@ -110,14 +116,33 @@ export const createSupplier = async (req: Request, res: Response) => {
   try {
     const parsed = createSupplierSchema.parse(req.body);
 
+    if (parsed.email && !emailRegex.test(parsed.email)) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
     const currentUserId = (req as any).identity?._id as string | undefined;
     if (!currentUserId) return res.sendStatus(401);
 
-    const existingByEmail = await getSupplierByEmailForUser(parsed.email, currentUserId);
+    const existingByEmail = parsed.email
+        ? await getSupplierByEmailForUser(parsed.email, currentUserId)
+        : null;
     if (existingByEmail) return res.status(400).json({ error: "Email already exists" });
 
-    const existingByPhone = await getSupplierByPhoneForUser(parsed.phone, currentUserId);
+    const existingByPhone = parsed.phone
+        ? await getSupplierByPhoneForUser(parsed.phone, currentUserId)
+        : null;
     if (existingByPhone) return res.status(400).json({ error: "Phone already exists" });
+
+    if (parsed.amount_owed === undefined || parsed.amount_owed === null) {
+      return res.status(400).json({ error: 'Please provide the Amount Owed.' });
+    }
+    if (Number.isNaN(parsed.amount_owed)) {
+      return res.status(400).json({ error: 'Amount Owed must be a valid number.' });
+    }
+
+    if (parsed.phone && parsed.phone.length < 8){
+      return res.status(400).json({ error: "Please enter a valid phone number." });
+    }
 
     const payload = { ...parsed, user_id: currentUserId };
     const created = await dbCreateSupplier(payload);

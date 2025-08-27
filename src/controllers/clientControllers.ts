@@ -13,6 +13,7 @@ import {
 } from "../db/client";
 import { Request, Response} from "express";
 import {z} from "zod";
+import {emailRegex} from "../db/client";
 
 const emailPre = z.preprocess((v) => v === '' ? undefined : v,
     z.string().email().optional()
@@ -21,7 +22,7 @@ const emailPre = z.preprocess((v) => v === '' ? undefined : v,
 const createClientSchema = z.object({
   name: z.string().min(1),
   phone: z.string().trim().min(10).optional().default(""),
-  email: emailPre.default(''),
+  email: emailPre.optional().default(''),
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -29,7 +30,7 @@ const createClientSchema = z.object({
 const updateClientSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().trim().min(10).optional(),
-  email: emailPre.default(''),
+  email: z.string().optional().default(''),  // Change to string and validate manually
   amount_owed: z.number().positive().default(0.0).optional(),
   notes: z.string().optional(),
 })
@@ -87,6 +88,11 @@ export const updateClient = async (req: Request, res: Response) => {
       return res.sendStatus(400).json({error: "Missing client id"});
 
     const payload = updateClientSchema.parse(req.body);
+
+    if (payload.email && !emailRegex.test(payload.email)) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
     if (Object.keys(payload).length === 0)
       return res.status(400).json({ error: "No fields to update" });
 
@@ -111,6 +117,11 @@ export const updateClient = async (req: Request, res: Response) => {
 export const createClient = async (req: Request, res: Response) => {
   try {
     const parsed = createClientSchema.parse(req.body);
+
+    if (parsed.email && !emailRegex.test(parsed.email)) {
+      return res.status(400).json({ error: "Please enter a valid email address" });
+    }
+
     const currentUserId = getCurrentUserId(req);
     if (!currentUserId) return res.sendStatus(401);
 
@@ -132,11 +143,11 @@ export const createClient = async (req: Request, res: Response) => {
     if (parsed.amount_owed === undefined || parsed.amount_owed === null) {
       return res.status(400).json({ error: 'Please provide the Amount Owed.' });
     }
-    if ( Number.isNaN(parsed.amount_owed)) {
+    if (Number.isNaN(parsed.amount_owed)) {
       return res.status(400).json({ error: 'Amount Owed must be a valid number.' });
     }
 
-    if (parsed.phone.length < 8){
+    if (parsed.phone && parsed.phone.length < 8){
       return res.status(400).json({ error: "Please enter a valid phone number." });
     }
 
