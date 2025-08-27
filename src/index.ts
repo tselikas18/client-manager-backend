@@ -15,8 +15,8 @@ const databaseURL = config.MONGODB_URL;
 
 app.use(cors({
   origin: [
-      'http://localhost:5173',
-      'https://client-manager-frontend-676t.onrender.com'
+    'http://localhost:5173',
+    'https://client-manager-frontend-676t.onrender.com'
   ],
   credentials: true,
 }));
@@ -26,13 +26,32 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
 
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Client Manager API is running',
+    status: 'online',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.use('/', router())
+
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    path: req.originalUrl
+  });
+});
+
 const server = http.createServer(app)
 
-server.listen(8000, () => { console.log('Server is running on port http://localhost:8000/'); });
+const PORT = process.env.PORT || 8000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
 console.log(`db is running at ${databaseURL}`);
 
 mongoose.Promise = Promise;
 mongoose.connect(databaseURL);
 mongoose.connection.on('error', (error: Error) => console.log(error));
-
-app.use('/', router())
