@@ -34,9 +34,14 @@ export const isOwner = (getById: (id: string) => Promise<any>) => {
   };
 };
 
+// src/middlewares/index.ts
 export const isAuthenticated = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
-    const token = req.cookies['authenticated'];
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer '))
+      return res.sendStatus(401);
+
+    const token = authHeader.split(' ')[1];
     if (!token) return res.sendStatus(401);
 
     const decoded = jwt.verify(token, config.JWT_SECRET) as any;
@@ -45,8 +50,6 @@ export const isAuthenticated = async (req: express.Request, res: express.Respons
     if (!existingUser) return res.sendStatus(401);
 
     (req as any).identity = existingUser;
-    console.debug('authenticated user id=', (req as any).identity._id);
-
     return next();
   } catch (error) {
     console.error(error);

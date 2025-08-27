@@ -82,20 +82,13 @@ export const login = async (req: Request, res: Response) => {
         { expiresIn: '7d' }
     );
 
-    res.cookie("authenticated", token, {
-      httpOnly: true,
-      path: "/",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
     const safeUser = mapToSafeUser(user);
 
     return res.status(200).json({
       success: true,
       message: "Authenticated successfully.",
       user: safeUser,
+      token: token,
     });
   } catch (error) {
     console.log(error);
