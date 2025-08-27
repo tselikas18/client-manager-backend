@@ -12,13 +12,13 @@ import {specs} from "./swagger/swaggerConfig";
 
 const app = express();
 const databaseURL = config.MONGODB_URL;
+// 'http://localhost:5173'
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://client-manager-frontend-676t.onrender.com'
-  ],
+  origin: process.env.FRONTEND_URL || 'https://client-manager-frontend-676t.onrender.com',
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(compression());
