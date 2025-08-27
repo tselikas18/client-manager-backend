@@ -1,49 +1,183 @@
-Pre-Release: v0.1.0-alpha — Backend API v1.0.0: Foundation Release Overview
-First stable pre-release of the backend API. Provides core CRUD operations to manage users and their associated clients or suppliers. Built with TypeScript, Express, and MongoDB.
+# Client Manager Backend
 
-Highlights
+A TypeScript-based REST API for managing clients and suppliers with user authentication and dashboard analytics.
 
-Stable v0.1.0 API surface for user and client/supplier management.
-Type-safe implementation using TypeScript.
-Persistent storage with MongoDB (Mongoose schemas).
-Lightweight REST endpoints implemented with Express.
-Basic validation and error handling for core flows.
+## 🚀 Overview
 
-Key Features
+Client Manager Backend is a full-featured REST API built with TypeScript, Express.js, and MongoDB. It provides comprehensive CRUD operations for managing users, clients, and suppliers with secure authentication and detailed analytics through a dashboard interface.
 
-Users
-Create, read, update, delete users.
-Input validation and consistent response shapes.
+## ✨ Key Features
 
-Clients / Suppliers
-Create, read, update, delete client and supplier records associated with users.
-Relationship modelling so each client/supplier links to an owner user.
+### User Management
+- User registration and authentication
+- Session-based authentication with secure cookies
+- Password hashing with salt
+- User profile management
 
-API structure
-RESTful routes, clear resource naming, and consistent status codes.
+### Client Management
+- Create, read, update, delete client records
+- Search clients by name, email, or phone
+- Track the amount owed by clients
+- User-specific client isolation (users can only manage their own clients)
+- Duplicate prevention for email, phone, and name within user scope
 
-Developer experience
-TypeScript types/interfaces for models and DTOs.
-Organized controllers, services, and data-access layers.
+### Supplier Management
+- Complete CRUD operations for suppliers
+- Search and filter capabilities
+- Track amounts owed to suppliers
+- User-specific supplier management
 
-Technologies
+### Dashboard & Analytics
+- Financial overview (total money owed to user vs. money user owes)
+- Net position calculation
+- Recent clients and suppliers tracking
+- Client and supplier count statistics
 
-Language: TypeScript
-Web framework: Express
-Database: MongoDB (Mongoose)
-Recommended Node version: 20.x+
+### Data Validation & Security
+- Comprehensive input validation using Zod
+- Email format validation
+- Phone number validation (minimum 8 characters)
+- Ownership verification middleware
+- Authentication middleware for protected routes
 
-Breaking changes
+## 🛠 Technology Stack
 
-None — initial stable release.
+- **Language**: TypeScript
+- **Runtime**: Node.js (20.x+ recommended)
+- **Web Framework**: Express.js
+- **Database**: MongoDB with Mongoose ODM
+- **Validation**: Zod
+- **Authentication**: JWT
+- **Development**: Nodemon for hot reloading
 
-Upgrade / Migration notes
+## 📁 Project Structure
 
-No migrations required for fresh installs. If upgrading from a pre-release, back up MongoDB before switching to v1.0.0.
-Ensure environment variables (MongoDB URI, PORT, any auth secrets) are set.
+```
+src/
+├── controllers/           # Request handlers
+│   ├── authenticationController.ts
+│   ├── clientControllers.ts
+│   ├── supplierController.ts
+│   ├── dashboardController.ts
+│   └── usersController.ts
+├── db/                   # Database models and helpers
+│   ├── client.ts
+│   ├── supplier.ts
+│   └── users.ts
+├── middlewares/          # Authentication and authorization
+│   └── index.ts
+├── router/              # Route definitions
+│   ├── authenticationRouter.ts
+│   ├── clientRouter.ts
+│   ├── supplierRouter.ts
+│   ├── dashboardRouter.ts
+│   ├── usersRouter.ts
+│   └── indexRouter.ts
+├── helpers/             # Utility functions
+│   └── index.ts
+├── types.ts             # TypeScript interfaces
+└── index.ts             # Application entry point
+```
 
-Getting started (example)
+## 🚀 Quick Start
 
-Install dependencies: npm install
-Configure environment: set MONGODB_URI, PORT and API_KEY.
-Start server (dev): npm start for build
+### Prerequisites
+- Node.js 20.x or higher
+- MongoDB instance
+- npm
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tselikas18/client-manager-backend.git
+   cd client-manager-backend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Configuration**
+   Create a `.env` file in the root directory (Check config.ts for environment variable validation):
+   ```env
+   MONGODB_URL=mongodb://localhost:27017/client-manager
+   API_KEY=your-secret-api-key-here
+   PORT=8000
+   JWT_SECRET=your-secret-jwt-key-here
+   NODE_ENV=development or production or test
+   ```
+   
+
+4. **Start the development server**
+   ```bash
+   npm start
+   ```
+
+The server will start on `http://localhost:8000`
+
+### Build for Production
+```bash
+npm tsc
+```
+
+## 🔐 Security Features
+
+- **Password Security**: JWT Authentication
+- **Session Management**: Secure cookie-based authentication with configurable expiration
+- **Input Validation**: Comprehensive validation using Zod schemas
+- **Ownership Protection**: Users can only access their own resources
+- **CORS Configuration**: Configured for frontend integration
+- **SQL Injection Prevention**: MongoDB with Mongoose provides built-in protection
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable      | Description                   | Required | Default     |
+|---------------|-------------------------------|----------|-------------|
+| `MONGODB_URL` | MongoDB connection string     | Yes      | -           |
+| `API_KEY`     | Secret key for authentication | Yes      | -           |
+| `PORT`        | Server port                   | Yes      | -           |
+| `JWT_SECRET`  | JWT Authentication String     | Yes      | -           |
+| `NODE_ENV`    | JWT Authentication String     | No       | development |
+
+## 🧪 Validation Rules
+
+### Client/Supplier Validation
+- **Name**: Required, minimum 1 character
+- **Email**: Optional, must be valid email format if provided
+- **Phone**: Optional, minimum 8 characters if provided
+- **Amount Owed**: Must be a positive number
+- **Notes**: Optional string
+
+### User Validation
+- **Username**: Required
+- **Email**: Required, valid email format
+- **Password**: Required for registration
+
+## 🚦 Error Handling
+The API returns consistent error responses.
+
+## Swagger API Documentation
+- http://localhost:8000/api-docs/
+
+Common HTTP status codes:
+- `200`: Success
+- `201`: Created
+- `400`: Bad Request (validation errors)
+- `401`: Unauthorized
+- `403`: Forbidden
+- `404`: Not Found
+- `409`: Conflict (duplicate data)
+- `500`: Internal Server Error
+
+## 📝 Development
+
+### Available Scripts
+
+- `npm start`: Start development server with nodemon
+- `tsc`: Build TypeScript to JavaScript
+
+
