@@ -112,14 +112,14 @@ src/
 
 4. **Start the development server**
    ```bash
-   npm start
+   nodemon
    ```
 
 The server will start on `http://localhost:8000`
 
 ### Build for Production
 ```bash
-npm tsc
+npm install && tsc
 ```
 
 ## 🔐 Security Features
@@ -173,11 +173,23 @@ Common HTTP status codes:
 - `409`: Conflict (duplicate data)
 - `500`: Internal Server Error
 
-## 📝 Development
+## 🚀 Deployment On Render
+- Deploying the backend as Web Service on Render:
 
-### Available Scripts
+**Create a new Web Service on Render**
+**Connect your GitHub repository**
+**Configure the service:**
+- **Environment: Node**
+- **Build Command: npm install && tsc**
+- **Start Command: node dist/src/index.js**
+- **Environment Variables:**
+- - **JWT_SECRET: Secret key for JWT token generation**
+- - **MONGODB_URL: MongoDB connection string**
+- - **API_KEY: API key for authentication**
+- - **FRONTEND_URL: URL of your frontend (e.g., https://your-frontend-name.onrender.com/)**
+- - **NODE_ENV: production**
+**Click "Create Web Service"**
+- The API will be available at your Render service URL.
 
-- `npm start`: Start development server with nodemon
-- `tsc`: Build TypeScript to JavaScript
 
 
